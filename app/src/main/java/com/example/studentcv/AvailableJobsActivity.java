@@ -1,19 +1,25 @@
 package com.example.studentcv;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AvailableJobsActivity extends AppCompatActivity {
 
@@ -21,6 +27,11 @@ public class AvailableJobsActivity extends AppCompatActivity {
     private RecyclerView jobsRecyclerView;
     private JobsAdapter jobsAdapter;
     private List<JobModel> jobList;
+    private List<JobModel> filteredJobList;
+    private Set<String> appliedJobIds; // Set of job IDs that the student applied to
+    private Spinner filterSpinner;
+    // Get the real student id from FirebaseAuth
+    private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,18 +39,73 @@ public class AvailableJobsActivity extends AppCompatActivity {
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_available_jobs);
 
-        // Initialize Firestore
         firestore = FirebaseFirestore.getInstance();
 
-        // Initialize RecyclerView
+        filterSpinner = findViewById(R.id.filterSpinner);
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
         jobsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         jobList = new ArrayList<>();
-        jobsAdapter = new JobsAdapter(jobList);
+        filteredJobList = new ArrayList<>();
+        appliedJobIds = new HashSet<>();
+        jobsAdapter = new JobsAdapter(filteredJobList);
         jobsRecyclerView.setAdapter(jobsAdapter);
 
-        // Fetch jobs from Firestore
+        setupSpinner();
+        fetchAppliedJobIds();
         fetchJobsFromFirestore();
+    }
+
+    private void setupSpinner() {
+        filterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                applyFilter(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                applyFilter(0);
+            }
+        });
+    }
+
+    private void applyFilter(int filterOption) {
+        filteredJobList.clear();
+        if (filterOption == 0) {
+            filteredJobList.addAll(jobList);
+        } else if (filterOption == 1) {
+            for (JobModel job : jobList) {
+                if (appliedJobIds.contains(job.getJobTitle())) { // Adjust as needed to match a unique identifier
+                    filteredJobList.add(job);
+                }
+            }
+        } else if (filterOption == 2) {
+            for (JobModel job : jobList) {
+                if (!appliedJobIds.contains(job.getJobTitle())) { // Adjust as needed
+                    filteredJobList.add(job);
+                }
+            }
+        }
+        jobsAdapter.notifyDataSetChanged();
+    }
+
+    private void fetchAppliedJobIds() {
+        firestore.collection("job_applications")
+                .whereEqualTo("studentId", studentId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    appliedJobIds.clear();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String appliedJobId = document.getString("jobId");
+                        if (appliedJobId != null) {
+                            appliedJobIds.add(appliedJobId);
+                        }
+                    }
+                    applyFilter(filterSpinner.getSelectedItemPosition());
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(AvailableJobsActivity.this, "Error fetching applied jobs: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
     }
 
     private void fetchJobsFromFirestore() {
@@ -51,8 +117,10 @@ public class AvailableJobsActivity extends AppCompatActivity {
                         JobModel job = document.toObject(JobModel.class);
                         jobList.add(job);
                     }
-                    jobsAdapter.notifyDataSetChanged();
+                    applyFilter(filterSpinner.getSelectedItemPosition());
                 })
-                .addOnFailureListener(e -> Toast.makeText(AvailableJobsActivity.this, "Error fetching jobs: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e ->
+                        Toast.makeText(AvailableJobsActivity.this, "Error fetching jobs: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
     }
 }

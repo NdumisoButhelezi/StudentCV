@@ -15,4 +15,10 @@
         <item>Pretoria</item>
         <item>Cape Town</item>
     </string-array>
+
+    <string-array name="job_filter_options">
+        <item>All Jobs</item>
+        <item>Applied Jobs</item>
+        <item>Not Applied Jobs</item>
+    </string-array>
 </resources>

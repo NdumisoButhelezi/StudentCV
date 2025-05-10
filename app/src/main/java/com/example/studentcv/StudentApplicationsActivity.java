@@ -3,58 +3,53 @@ package com.example.studentcv;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplicationsActivity extends AppCompatActivity {
-
+public class StudentApplicationsActivity extends AppCompatActivity {
     private FirebaseFirestore firestore;
     private RecyclerView applicationsRecyclerView;
-    private RecruiterApplicationsAdapter adapter;
+    private ApplicationsAdapter applicationsAdapter;
     private List<JobApplication> applicationList;
+    // Get the real student id from FirebaseAuth
+    private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_applications);
+        setContentView(R.layout.activity_student_applications);
 
-        // Initialize Firestore and RecyclerView
         firestore = FirebaseFirestore.getInstance();
         applicationsRecyclerView = findViewById(R.id.applicationsRecyclerView);
         applicationsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Initialize the application list and the adapter
         applicationList = new ArrayList<>();
-        adapter = new RecruiterApplicationsAdapter(applicationList);
-        applicationsRecyclerView.setAdapter(adapter);
+        applicationsAdapter = new ApplicationsAdapter(applicationList);
+        applicationsRecyclerView.setAdapter(applicationsAdapter);
 
-        // Fetch applications from Firestore
         fetchApplicationsFromFirestore();
     }
 
     private void fetchApplicationsFromFirestore() {
         firestore.collection("job_applications")
+                .whereEqualTo("studentId", studentId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    applicationList.clear(); // Clear the list to avoid duplicates
+                    applicationList.clear();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         JobApplication application = document.toObject(JobApplication.class);
-                        application.setJobId(document.getId()); // Optional: Set the document ID as Job ID
                         applicationList.add(application);
                     }
-                    // Notify the adapter about data changes
-                    adapter.notifyDataSetChanged();
+                    applicationsAdapter.notifyDataSetChanged();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(ApplicationsActivity.this, "Error fetching applications: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> Toast.makeText(StudentApplicationsActivity.this, "Error fetching applications: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 }

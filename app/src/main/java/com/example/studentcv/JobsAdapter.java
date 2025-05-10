@@ -1,5 +1,6 @@
 package com.example.studentcv;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +8,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -33,6 +36,14 @@ public class JobsAdapter extends RecyclerView.Adapter<JobsAdapter.JobViewHolder>
         holder.jobDescription.setText(job.getJobDescription());
         holder.jobType.setText(job.getJobType());
         holder.jobLocation.setText(job.getJobLocation());
+
+        // Set click listener for Apply Now button
+        holder.applyButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), JobApplicationActivity.class);
+            // Pass the job id (assumes JobModel has a getJobId() method)
+            intent.putExtra("jobId", job.getJobId());
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override
@@ -42,6 +53,7 @@ public class JobsAdapter extends RecyclerView.Adapter<JobsAdapter.JobViewHolder>
 
     static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, companyName, jobDescription, jobType, jobLocation;
+        MaterialButton applyButton;
 
         public JobViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -50,6 +62,7 @@ public class JobsAdapter extends RecyclerView.Adapter<JobsAdapter.JobViewHolder>
             jobDescription = itemView.findViewById(R.id.jobDescription);
             jobType = itemView.findViewById(R.id.jobType);
             jobLocation = itemView.findViewById(R.id.jobLocation);
+            applyButton = itemView.findViewById(R.id.applyButton);
         }
     }
 }

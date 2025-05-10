@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
@@ -18,40 +19,40 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Job Title"
-            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/companyName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Company Name"
-            android:textSize="16sp"
-            android:textStyle="italic"
-            android:layout_marginTop="4dp" />
+            android:text="Company Name" />
 
         <TextView
             android:id="@+id/jobDescription"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Job Description"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:text="Job Description" />
 
         <TextView
             android:id="@+id/jobType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Job Type"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:text="Job Type" />
 
         <TextView
             android:id="@+id/jobLocation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Job Location"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:text="Job Location" />
+
+        <!-- Apply Now button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/applyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apply Now"
+            android:layout_marginTop="8dp"
+            app:backgroundTint="@color/primaryColor"
+            app:cornerRadius="4dp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
