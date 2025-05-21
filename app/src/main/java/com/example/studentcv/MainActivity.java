@@ -28,9 +28,9 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(() -> {
             FirebaseUser currentUser = mAuth.getCurrentUser();
             if (currentUser != null) {
-                startActivity(new Intent(MainActivity.this, HomeActivity.class));
+                startActivity(new Intent(MainActivity.this,LoginActivity .class));
             } else {
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                startActivity(new Intent(MainActivity.this, RegisterActivity.class));
             }
             finish();
         }, SPLASH_TIME);

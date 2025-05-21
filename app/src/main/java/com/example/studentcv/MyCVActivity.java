@@ -81,11 +81,10 @@ public class MyCVActivity extends AppCompatActivity {
                 return;
             }
 
-            // Clear input and show user message
-            messageInput.setText("");
+            messageInput.setText(""); // Clear input
             addChatMessage("You", userMessage, getCurrentTime());
 
-            // Process message
+            // Process the message
             if (userMessage.equalsIgnoreCase("generate CV")) {
                 handleGenerateCV();
             } else {
@@ -100,16 +99,14 @@ public class MyCVActivity extends AppCompatActivity {
 
     private void handleUserMessage(String userMessage) {
         if (currentStep < metadataFields.length) {
-            // Save user input
-            String field = metadataFields[currentStep];
-            userMetadata.put(field, userMessage);
+            userMetadata.put(metadataFields[currentStep], userMessage); // Save user input
             currentStep++;
 
             // Show next prompt or completion message
             if (currentStep < prompts.length) {
                 addChatMessage("VOVO", prompts[currentStep], getCurrentTime());
             } else {
-                addChatMessage("VOVO", "Great! All information collected. Type 'generate CV' to create your CV.", getCurrentTime());
+                addChatMessage("VOVO", "All information collected. Type 'generate CV' to create your CV.", getCurrentTime());
             }
         }
     }
@@ -123,7 +120,6 @@ public class MyCVActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         addChatMessage("VOVO", "Generating your CV...", getCurrentTime());
 
-        // Prepare the prompt for CV generation
         String cvPrompt = constructCVPrompt(userMetadata);
 
         // Use GeminiPro to generate the CV
@@ -132,10 +128,7 @@ public class MyCVActivity extends AppCompatActivity {
             public void onResponse(String response) {
                 progressBar.setVisibility(View.GONE);
 
-                // Handle the response to ensure the 'license' field is present
-                String sanitizedResponse = sanitizeResponse(response);
-
-                navigateToCVPreview(sanitizedResponse);
+                navigateToCVPreview(sanitizeResponse(response));
             }
 
             @Override
@@ -148,13 +141,12 @@ public class MyCVActivity extends AppCompatActivity {
     }
 
     private String constructCVPrompt(HashMap<String, String> metadata) {
-        return "Generate a professional CV in HTML format using the following information:\n" +
+        return "Create a professional CV in HTML using this information:\n" +
                 "Name: " + metadata.get("name") + "\n" +
                 "Contact: " + metadata.get("contact") + "\n" +
                 "Education: " + metadata.get("education") + "\n" +
                 "Experience: " + metadata.get("experience") + "\n" +
-                "Skills: " + metadata.get("skills") + "\n" +
-                "Please format it professionally with appropriate sections and styling.";
+                "Skills: " + metadata.get("skills") + "\n";
     }
 
     private String sanitizeResponse(String jsonResponse) {

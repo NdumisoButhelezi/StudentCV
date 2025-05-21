@@ -2,7 +2,6 @@ package com.example.studentcv;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -11,7 +10,7 @@ import androidx.cardview.widget.CardView;
 
 public class StudentDashboardActivity extends AppCompatActivity {
 
-    private CardView cvCard, jobsCard;
+    private CardView cvCard, jobsCard, applicationsCard;
     private Button continueButton;
 
     @Override
@@ -22,18 +21,27 @@ public class StudentDashboardActivity extends AppCompatActivity {
         // Initialize the views
         cvCard = findViewById(R.id.cvCard);
         jobsCard = findViewById(R.id.jobsCard);
+        applicationsCard = findViewById(R.id.applicationsCard);
         continueButton = findViewById(R.id.continueButton);
 
-        // Set click listeners for the card views
+        // Set click listener for the CV card
         cvCard.setOnClickListener(v -> {
             // Navigate to My CV Activity
             Intent intent = new Intent(StudentDashboardActivity.this, MyCVActivity.class);
             startActivity(intent);
         });
 
+        // Set click listener for the Jobs card
         jobsCard.setOnClickListener(v -> {
             // Navigate to Available Jobs Activity
             Intent intent = new Intent(StudentDashboardActivity.this, AvailableJobsActivity.class);
+            startActivity(intent);
+        });
+
+        // Set click listener for the Applications card
+        applicationsCard.setOnClickListener(v -> {
+            // Navigate to Student Applications Activity
+            Intent intent = new Intent(StudentDashboardActivity.this, StudentApplicationsActivity.class);
             startActivity(intent);
         });
 

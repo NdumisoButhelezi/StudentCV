@@ -1,9 +1,11 @@
 package com.example.studentcv;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +21,6 @@ public class StudentApplicationsActivity extends AppCompatActivity {
     private RecyclerView applicationsRecyclerView;
     private ApplicationsAdapter applicationsAdapter;
     private List<JobApplication> applicationList;
-    // Get the real student id from FirebaseAuth
     private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Override
@@ -27,12 +28,24 @@ public class StudentApplicationsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_applications);
 
+        // Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbarApplications);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("My Applications");
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+        toolbar.setNavigationOnClickListener(v -> {
+            startActivity(new Intent(this, StudentDashboardActivity.class));
+            finish();
+        });
+
+        // RecyclerView + Adapter
         firestore = FirebaseFirestore.getInstance();
         applicationsRecyclerView = findViewById(R.id.applicationsRecyclerView);
         applicationsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         applicationList = new ArrayList<>();
-        applicationsAdapter = new ApplicationsAdapter(applicationList);
+        applicationsAdapter = new ApplicationsAdapter(applicationList, this);
         applicationsRecyclerView.setAdapter(applicationsAdapter);
 
         fetchApplicationsFromFirestore();
@@ -44,12 +57,23 @@ public class StudentApplicationsActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     applicationList.clear();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        JobApplication application = document.toObject(JobApplication.class);
-                        applicationList.add(application);
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        JobApplication app = doc.toObject(JobApplication.class);
+                        applicationList.add(app);
                     }
                     applicationsAdapter.notifyDataSetChanged();
                 })
-                .addOnFailureListener(e -> Toast.makeText(StudentApplicationsActivity.this, "Error fetching applications: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e ->
+                        Toast.makeText(this,
+                                "Error fetching applications: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
+                );
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        startActivity(new Intent(this, StudentDashboardActivity.class));
+        finish();
     }
 }

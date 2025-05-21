@@ -1,19 +1,28 @@
 package com.example.studentcv;
 
 public class ChatMessage {
+    private String senderId;
     private String message;
-    private boolean isUser;
+    private long timestamp;
 
-    public ChatMessage(String message, boolean isUser) {
+    // Default constructor required for calls to DataSnapshot.getValue(ChatMessage.class)
+    public ChatMessage() { }
+
+    public ChatMessage(String senderId, String message, long timestamp) {
+        this.senderId = senderId;
         this.message = message;
-        this.isUser = isUser;
+        this.timestamp = timestamp;
+    }
+
+    public String getSenderId() {
+        return senderId;
     }
 
     public String getMessage() {
         return message;
     }
 
-    public boolean isUser() {
-        return isUser;
+    public long getTimestamp() {
+        return timestamp;
     }
 }

@@ -23,8 +23,8 @@ public class JobApplicationActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private FirebaseFirestore firestore;
     private String jobId;
-    // Get the actual student id from FirebaseAuth
     private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+    private String studentEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail(); // Get student email
     private String cvBase64;
     private ImageView cvPreviewImageView;
     private Button selectImageButton;
@@ -36,7 +36,7 @@ public class JobApplicationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_job_application);
 
         firestore = FirebaseFirestore.getInstance();
-        jobId = getIntent().getStringExtra("jobId");
+        jobId = getIntent().getStringExtra("jobId"); // Job ID from Intent
 
         cvPreviewImageView = findViewById(R.id.cvPreviewImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
@@ -56,12 +56,13 @@ public class JobApplicationActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri imageUri = data.getData();
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageUri);
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                 cvPreviewImageView.setImageBitmap(bitmap);
+
                 // Convert the bitmap image into a Base64 string
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
@@ -75,11 +76,37 @@ public class JobApplicationActivity extends AppCompatActivity {
     }
 
     private void submitApplication() {
-        if(cvBase64 == null || cvBase64.isEmpty()) {
+        if (cvBase64 == null || cvBase64.isEmpty()) {
             Toast.makeText(this, "Please select a CV image", Toast.LENGTH_SHORT).show();
             return;
         }
-        JobApplication application = new JobApplication(jobId, studentId, cvBase64);
+
+        if (jobId == null || jobId.isEmpty()) {
+            // Handle null jobId gracefully by setting a default job title and submitting
+            String defaultJobTitle = "Unknown Job";
+            submitApplicationToFirestore(defaultJobTitle);
+        } else {
+            // Fetch job title from the job_posts collection
+            firestore.collection("job_posts")
+                    .document(jobId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String jobTitle = documentSnapshot.getString("jobTitle");
+                            if (jobTitle == null || jobTitle.isEmpty()) {
+                                jobTitle = "Untitled Job"; // Default if jobTitle is missing
+                            }
+                            submitApplicationToFirestore(jobTitle);
+                        } else {
+                            Toast.makeText(this, "Job not found in database.", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Error fetching job details: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void submitApplicationToFirestore(String jobTitle) {
+        JobApplication application = new JobApplication(jobId, studentId, studentEmail, cvBase64, jobTitle);
         firestore.collection("job_applications")
                 .add(application)
                 .addOnSuccessListener(documentReference -> {
