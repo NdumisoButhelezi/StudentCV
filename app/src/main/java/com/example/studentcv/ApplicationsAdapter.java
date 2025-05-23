@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +42,31 @@ public class ApplicationsAdapter extends RecyclerView.Adapter<ApplicationsAdapte
         JobApplication app = applications.get(position);
 
         holder.emailTextView.setText("Email: " + app.getStudentEmail());
-        holder.jobTitleTextView.setText("Job Title: " + app.getJobTitle());
+
+        // Fix: Only try to fetch if jobId is not null or empty
+        if (app.getJobId() == null || app.getJobId().isEmpty()) {
+            holder.jobTitleTextView.setText("Job Title: Unknown Job");
+        } else if (app.getJobTitle() == null || app.getJobTitle().isEmpty() ||
+                "Unknown Job".equals(app.getJobTitle()) || "Untitled Job".equals(app.getJobTitle())) {
+            holder.jobTitleTextView.setText("Job Title: Loading...");
+            FirebaseFirestore.getInstance()
+                    .collection("job_posts")
+                    .document(app.getJobId())
+                    .get()
+                    .addOnSuccessListener(doc -> {
+                        String fetchedTitle = doc.getString("jobTitle");
+                        if (fetchedTitle == null || fetchedTitle.isEmpty())
+                            fetchedTitle = doc.getString("title");
+                        if (fetchedTitle == null || fetchedTitle.isEmpty())
+                            fetchedTitle = "Unknown Job";
+                        holder.jobTitleTextView.setText("Job Title: " + fetchedTitle);
+                        app.setJobTitle(fetchedTitle);
+                    })
+                    .addOnFailureListener(e -> holder.jobTitleTextView.setText("Job Title: Unknown Job"));
+        } else {
+            holder.jobTitleTextView.setText("Job Title: " + app.getJobTitle());
+        }
+
         holder.statusTextView.setText("Status: " + app.getStatus());
 
         Timestamp ts = app.getAppliedDate();

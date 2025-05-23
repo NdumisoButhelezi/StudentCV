@@ -1,7 +1,6 @@
 package com.example.studentcv;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,16 +15,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-
 public class MyCVActivity extends AppCompatActivity {
 
     private static final String TAG = "MyCVActivity";
@@ -34,21 +23,7 @@ public class MyCVActivity extends AppCompatActivity {
     private ImageButton sendButton;
     private EditText messageInput;
     private ScrollView scrollView;
-    private HashMap<String, String> userMetadata;
 
-    private final String[] metadataFields = {
-            "name", "contact", "education", "experience", "skills"
-    };
-
-    private final String[] prompts = {
-            "Please provide your full name.",
-            "What is your contact information? (email, phone, location)",
-            "Tell me about your education background (institutions, degrees, dates).",
-            "Describe your work experience (company names, positions, dates, responsibilities).",
-            "List your technical and soft skills."
-    };
-
-    private int currentStep = 0;
     private GeminiPro geminiPro;
 
     @Override
@@ -56,24 +31,14 @@ public class MyCVActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_cv);
 
-        initializeViews();
-        setupClickListeners();
-        startConversation();
-
-        geminiPro = new GeminiPro(); // Initialize GeminiPro
-    }
-
-    private void initializeViews() {
         chatBodyContainer = findViewById(R.id.chatBodyContainer);
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
         progressBar = findViewById(R.id.progressBar);
         scrollView = findViewById(R.id.scrollView);
 
-        userMetadata = new HashMap<>();
-    }
+        geminiPro = new GeminiPro(); // Initialize GeminiPro
 
-    private void setupClickListeners() {
         sendButton.setOnClickListener(v -> {
             String userMessage = messageInput.getText().toString().trim();
             if (userMessage.isEmpty()) {
@@ -82,117 +47,38 @@ public class MyCVActivity extends AppCompatActivity {
             }
 
             messageInput.setText(""); // Clear input
-            addChatMessage("You", userMessage, getCurrentTime());
+            addChatMessage("You", userMessage);
 
-            // Process the message
-            if (userMessage.equalsIgnoreCase("generate CV")) {
-                handleGenerateCV();
-            } else {
-                handleUserMessage(userMessage);
-            }
-        });
-    }
-
-    private void startConversation() {
-        addChatMessage("VOVO", "Welcome to CV Generator! " + prompts[currentStep], getCurrentTime());
-    }
-
-    private void handleUserMessage(String userMessage) {
-        if (currentStep < metadataFields.length) {
-            userMetadata.put(metadataFields[currentStep], userMessage); // Save user input
-            currentStep++;
-
-            // Show next prompt or completion message
-            if (currentStep < prompts.length) {
-                addChatMessage("VOVO", prompts[currentStep], getCurrentTime());
-            } else {
-                addChatMessage("VOVO", "All information collected. Type 'generate CV' to create your CV.", getCurrentTime());
-            }
-        }
-    }
-
-    private void handleGenerateCV() {
-        if (userMetadata.size() < metadataFields.length) {
-            addChatMessage("VOVO", "Please complete all fields before generating the CV.", getCurrentTime());
-            return;
-        }
-
-        progressBar.setVisibility(View.VISIBLE);
-        addChatMessage("VOVO", "Generating your CV...", getCurrentTime());
-
-        String cvPrompt = constructCVPrompt(userMetadata);
-
-        // Use GeminiPro to generate the CV
-        GeminiPro.getResponse(geminiPro.getModel().startChat(), cvPrompt, new ResponseCallBack() {
-            @Override
-            public void onResponse(String response) {
-                progressBar.setVisibility(View.GONE);
-
-                navigateToCVPreview(sanitizeResponse(response));
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                progressBar.setVisibility(View.GONE);
-                Log.e(TAG, "Error generating CV", t);
-                addChatMessage("VOVO", "Failed to generate CV. Please try again.", getCurrentTime());
-            }
-        });
-    }
-
-    private String constructCVPrompt(HashMap<String, String> metadata) {
-        return "Create a professional CV in HTML using this information:\n" +
-                "Name: " + metadata.get("name") + "\n" +
-                "Contact: " + metadata.get("contact") + "\n" +
-                "Education: " + metadata.get("education") + "\n" +
-                "Experience: " + metadata.get("experience") + "\n" +
-                "Skills: " + metadata.get("skills") + "\n";
-    }
-
-    private String sanitizeResponse(String jsonResponse) {
-        try {
-            JsonObject jsonObject = JsonParser.parseString(jsonResponse).getAsJsonObject();
-            JsonArray candidates = jsonObject.getAsJsonArray("candidates");
-
-            for (JsonElement candidate : candidates) {
-                JsonObject citationMetadata = candidate.getAsJsonObject()
-                        .getAsJsonObject("citationMetadata");
-                JsonArray citationSources = citationMetadata.getAsJsonArray("citationSources");
-
-                for (JsonElement source : citationSources) {
-                    JsonObject sourceObject = source.getAsJsonObject();
-                    if (!sourceObject.has("license")) {
-                        sourceObject.addProperty("license", "Unknown License");
-                    }
+            progressBar.setVisibility(View.VISIBLE);
+            GeminiPro.getResponse(geminiPro.getModel().startChat(), userMessage, new ResponseCallBack() {
+                @Override
+                public void onResponse(String response) {
+                    progressBar.setVisibility(View.GONE);
+                    addChatMessage("VOVO", response);
                 }
-            }
 
-            return jsonObject.toString();
-        } catch (Exception e) {
-            Log.e(TAG, "Error sanitizing response", e);
-            return jsonResponse; // Return the original response if sanitization fails
-        }
+                @Override
+                public void onError(Throwable t) {
+                    progressBar.setVisibility(View.GONE);
+                    Log.e(TAG, "Error getting response", t);
+                    addChatMessage("VOVO", "Sorry, I couldn't answer that. Please try again.");
+                }
+            });
+        });
+
+        addChatMessage("VOVO", "Hi! I'm VOVO. Ask me anything about CVs, and I'll help you.");
     }
 
-    private void navigateToCVPreview(String cvData) {
-        Intent intent = new Intent(MyCVActivity.this, CVPreviewActivity.class);
-        intent.putExtra("cvData", cvData);
-        startActivity(intent);
-    }
-
-    private void addChatMessage(String sender, String message, String date) {
+    private void addChatMessage(String sender, String message) {
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.chat_message_block, null);
 
         TextView userAgentName = view.findViewById(R.id.userAgentNameTextfield);
         TextView userAgentMessage = view.findViewById(R.id.userAgentMessageTextView);
-        TextView dateTextView = view.findViewById(R.id.dateTextView);
 
         userAgentName.setText(sender);
         userAgentMessage.setText(message);
-        dateTextView.setText(date);
 
-        // Add different background colors for user and AI messages
         if (sender.equals("You")) {
             view.setBackgroundResource(R.drawable.user_message_background);
         } else {
@@ -201,12 +87,5 @@ public class MyCVActivity extends AppCompatActivity {
 
         chatBodyContainer.addView(view);
         scrollView.post(() -> scrollView.fullScroll(View.FOCUS_DOWN));
-    }
-
-    private String getCurrentTime() {
-        Instant instant = Instant.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                .withZone(ZoneId.systemDefault());
-        return formatter.format(instant);
     }
 }

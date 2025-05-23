@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -23,12 +24,14 @@ public class JobApplicationActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private FirebaseFirestore firestore;
     private String jobId;
+    private String jobTitle;
     private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-    private String studentEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail(); // Get student email
+    private String studentEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
     private String cvBase64;
     private ImageView cvPreviewImageView;
     private Button selectImageButton;
     private Button submitButton;
+    private TextView jobTitleTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,11 +39,39 @@ public class JobApplicationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_job_application);
 
         firestore = FirebaseFirestore.getInstance();
-        jobId = getIntent().getStringExtra("jobId"); // Job ID from Intent
+        jobId = getIntent().getStringExtra("jobId");
+        jobTitle = getIntent().getStringExtra("jobTitle");
 
+        jobTitleTextView = findViewById(R.id.jobTitleTextView);
         cvPreviewImageView = findViewById(R.id.cvPreviewImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
         submitButton = findViewById(R.id.submitButton);
+
+        // Show jobTitle from Intent if present, else fetch from Firestore
+        if (jobTitle != null && !jobTitle.isEmpty()) {
+            jobTitleTextView.setText(jobTitle);
+        } else if (jobId != null) {
+            firestore.collection("job_posts")
+                    .document(jobId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        jobTitle = documentSnapshot.getString("jobTitle");
+                        if (jobTitle == null || jobTitle.isEmpty()) {
+                            jobTitle = documentSnapshot.getString("title");
+                        }
+                        if (jobTitle == null || jobTitle.isEmpty()) {
+                            jobTitle = "Unknown Job";
+                        }
+                        jobTitleTextView.setText(jobTitle);
+                    })
+                    .addOnFailureListener(e -> {
+                        jobTitle = "Unknown Job";
+                        jobTitleTextView.setText(jobTitle);
+                    });
+        } else {
+            jobTitle = "Unknown Job";
+            jobTitleTextView.setText(jobTitle);
+        }
 
         selectImageButton.setOnClickListener(v -> openImageChooser());
         submitButton.setOnClickListener(v -> submitApplication());
@@ -63,7 +94,6 @@ public class JobApplicationActivity extends AppCompatActivity {
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                 cvPreviewImageView.setImageBitmap(bitmap);
 
-                // Convert the bitmap image into a Base64 string
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                 byte[] imageBytes = outputStream.toByteArray();
@@ -80,32 +110,9 @@ public class JobApplicationActivity extends AppCompatActivity {
             Toast.makeText(this, "Please select a CV image", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        if (jobId == null || jobId.isEmpty()) {
-            // Handle null jobId gracefully by setting a default job title and submitting
-            String defaultJobTitle = "Unknown Job";
-            submitApplicationToFirestore(defaultJobTitle);
-        } else {
-            // Fetch job title from the job_posts collection
-            firestore.collection("job_posts")
-                    .document(jobId)
-                    .get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            String jobTitle = documentSnapshot.getString("jobTitle");
-                            if (jobTitle == null || jobTitle.isEmpty()) {
-                                jobTitle = "Untitled Job"; // Default if jobTitle is missing
-                            }
-                            submitApplicationToFirestore(jobTitle);
-                        } else {
-                            Toast.makeText(this, "Job not found in database.", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Error fetching job details: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        if (jobTitle == null || jobTitle.isEmpty()) {
+            jobTitle = "Unknown Job";
         }
-    }
-
-    private void submitApplicationToFirestore(String jobTitle) {
         JobApplication application = new JobApplication(jobId, studentId, studentEmail, cvBase64, jobTitle);
         firestore.collection("job_applications")
                 .add(application)

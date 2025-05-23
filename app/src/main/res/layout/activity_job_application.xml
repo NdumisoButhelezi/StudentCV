@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/backgroundGray">
 
-    <!-- Optionally include a Toolbar with your back button drawable -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -19,13 +18,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <TextView
+        android:id="@+id/jobTitleTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Job Title"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:paddingBottom="12dp"
+        android:textColor="#222"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <ImageView
         android:id="@+id/cvPreviewImageView"
         android:layout_width="0dp"
         android:layout_height="200dp"
         android:layout_margin="16dp"
         android:scaleType="centerCrop"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toBottomOf="@id/jobTitleTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

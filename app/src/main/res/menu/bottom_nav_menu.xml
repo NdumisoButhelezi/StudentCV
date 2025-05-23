@@ -1,22 +1,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- CV (Visible for Students) -->
-    <item
-        android:id="@+id/nav_cv"
-        android:icon="@drawable/ic_cv"
-        android:title="CV" />
+
 
     <!-- Jobs (Default for All) -->
-    <item
-        android:id="@+id/nav_jobs"
-        android:icon="@drawable/ic_jobs"
-        android:title="Jobs" />
+
 
     <!-- Manage Jobs (Visible for Recruiters) -->
-    <item
-        android:id="@+id/nav_manage_jobs"
-        android:icon="@drawable/ic_manage_jobs"
-        android:title="Manage Jobs" />
+
 
     <!-- Profile (Visible for All) -->
     <item

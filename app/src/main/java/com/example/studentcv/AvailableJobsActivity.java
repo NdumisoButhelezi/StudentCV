@@ -1,9 +1,9 @@
 package com.example.studentcv;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -28,9 +28,8 @@ public class AvailableJobsActivity extends AppCompatActivity {
     private JobsAdapter jobsAdapter;
     private List<JobModel> jobList;
     private List<JobModel> filteredJobList;
-    private Set<String> appliedJobIds; // Set of job IDs that the student applied to
+    private Set<String> appliedJobIds;
     private Spinner filterSpinner;
-    // Get the real student id from FirebaseAuth
     private String studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Override
@@ -47,7 +46,13 @@ public class AvailableJobsActivity extends AppCompatActivity {
         jobList = new ArrayList<>();
         filteredJobList = new ArrayList<>();
         appliedJobIds = new HashSet<>();
-        jobsAdapter = new JobsAdapter(filteredJobList);
+        jobsAdapter = new JobsAdapter(this, filteredJobList, job -> {
+            // On Apply click, launch application activity
+            Intent intent = new Intent(this, JobApplicationActivity.class);
+            intent.putExtra("jobId", job.getJobId());
+            intent.putExtra("jobTitle", job.getJobTitle());
+            startActivity(intent);
+        });
         jobsRecyclerView.setAdapter(jobsAdapter);
 
         setupSpinner();
@@ -75,13 +80,13 @@ public class AvailableJobsActivity extends AppCompatActivity {
             filteredJobList.addAll(jobList);
         } else if (filterOption == 1) {
             for (JobModel job : jobList) {
-                if (appliedJobIds.contains(job.getJobTitle())) { // Adjust as needed to match a unique identifier
+                if (appliedJobIds.contains(job.getJobId())) {
                     filteredJobList.add(job);
                 }
             }
         } else if (filterOption == 2) {
             for (JobModel job : jobList) {
-                if (!appliedJobIds.contains(job.getJobTitle())) { // Adjust as needed
+                if (!appliedJobIds.contains(job.getJobId())) {
                     filteredJobList.add(job);
                 }
             }
@@ -115,6 +120,7 @@ public class AvailableJobsActivity extends AppCompatActivity {
                     jobList.clear();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         JobModel job = document.toObject(JobModel.class);
+                        job.setJobId(document.getId());
                         jobList.add(job);
                     }
                     applyFilter(filterSpinner.getSelectedItemPosition());

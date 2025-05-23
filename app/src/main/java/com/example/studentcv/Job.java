@@ -1,7 +1,9 @@
 package com.example.studentcv;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 
+@IgnoreExtraProperties
 public class Job {
     private String id;
     private String title;

@@ -39,13 +39,7 @@ public class HomeActivity extends AppCompatActivity {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
 
-            if (itemId == R.id.nav_cv) {
-                selectedFragment = new CvFragment();
-            } else if (itemId == R.id.nav_jobs) {
-                selectedFragment = new JobsFragment();
-            } else if (itemId == R.id.nav_manage_jobs) {
-                selectedFragment = new ManageJobsFragment();
-            } else if (itemId == R.id.nav_profile) {
+            if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             } else if (itemId == R.id.nav_logout) {
                 handleLogout();

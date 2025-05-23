@@ -40,7 +40,8 @@ public class JobsActivity extends AppCompatActivity {
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
         jobsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         jobList = new ArrayList<>();
-        jobsAdapter = new JobsAdapter(jobList);
+        // No apply functionality needed, so empty lambda is passed.
+        jobsAdapter = new JobsAdapter(this, jobList, job -> {});
         jobsRecyclerView.setAdapter(jobsAdapter);
 
         fetchJobs();
